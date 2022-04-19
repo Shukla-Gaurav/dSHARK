@@ -1,0 +1,21 @@
+backend: "dshark"
+max_batch_size: 0
+input [
+  {
+    name: "IN0"
+    data_type: TYPE_INT64
+    dims: [1, 7]
+  }
+]
+output [
+  {
+    name: "OUT0"
+    data_type: TYPE_FP32
+    dims: [1, 2]
+  }
+]
+instance_group [
+  {
+    kind: KIND_CPU
+  }
+]
