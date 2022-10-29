@@ -72,15 +72,16 @@ def get_models():
         IREE_EXTRA_ARGS += [
             "--iree-flow-enable-conv-nchw-to-nhwc-transform",
             "--iree-flow-enable-padding-linalg-ops",
-            "--iree-flow-linalg-ops-padding-size=16",
-            "--iree-flow-enable-iterator-space-fusion",
+            "--iree-flow-linalg-ops-padding-size=32",
+            "--iree-spirv-unify-aliased-resources=false",
         ]
         if args.import_mlir == True:
             return get_vae16(args, model_name=VAE_FP16), get_unet16_wrapped(
                 args, model_name=UNET_FP16
             )
         return get_shark_model(
-            args, GCLOUD_BUCKET, VAE_FP16, IREE_EXTRA_ARGS
+            args, GCLOUD_BUCKET, VAE_FP16, 
+                IREE_EXTRA_ARGS ,
         ), get_shark_model(args, GCLOUD_BUCKET, UNET_FP16, IREE_EXTRA_ARGS)
 
     elif args.precision == "fp32":
@@ -88,6 +89,7 @@ def get_models():
             "--iree-flow-enable-conv-nchw-to-nhwc-transform",
             "--iree-flow-enable-padding-linalg-ops",
             "--iree-flow-linalg-ops-padding-size=16",
+            #"--iree-spirv-unify-aliased-resources=false",
         ]
         if args.import_mlir == True:
             return (
@@ -232,7 +234,6 @@ def stable_diff_inf(
     pil_images = []
     for i, t in tqdm(enumerate(scheduler.timesteps)):
 
-        time.sleep(0.1)
         if DEBUG:
             log_write.write(f"\ni = {i} t = {t} ")
         step_start = time.time()
@@ -251,14 +252,13 @@ def stable_diff_inf(
             log_write.write(f"time={step_ms}ms")
         latents = scheduler.step(noise_pred, i, latents)["prev_sample"]
         # scale and decode the image latents with vae
-        latents = 1 / 0.18215 * latents
-        latents_numpy = latents.detach().numpy()
-        image = vae.forward((latents_numpy,))
-        image = torch.from_numpy(image)
-        image = image.detach().cpu().permute(0, 2, 3, 1).numpy()
-        images = (image * 255).round().astype("uint8")
-        pil_images = [Image.fromarray(image) for image in images]
-        yield pil_images[0], ""
+    latents = 1 / 0.18215 * latents
+    latents_numpy = latents.detach().numpy()
+    image = vae.forward((latents_numpy,))
+    image = torch.from_numpy(image)
+    image = image.detach().cpu().permute(0, 2, 3, 1).numpy()
+    images = (image * 255).round().astype("uint8")
+    pil_images = [Image.fromarray(image) for image in images]
 
     avg_ms = 1000 * avg_ms / args.steps
     if DEBUG:
@@ -273,4 +273,4 @@ def stable_diff_inf(
     std_output = ""
     with open(r"logs/stable_diffusion_log.txt", "r") as log_read:
         std_output = log_read.read()
-    yield output, std_output
+    return output, std_output

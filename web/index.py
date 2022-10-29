@@ -14,14 +14,11 @@ def debug_event(debug):
 with gr.Blocks() as shark_web:
 
     with gr.Row():
-        with gr.Group():
-            with gr.Column(scale=1):
-                img = Image.open("./Nod_logo.jpg")
-                gr.Image(value=img, show_label=False, interactive=False).style(
-                    height=70, width=70
-                )
-            with gr.Column(scale=9):
-                gr.Label(value="Shark Models Demo.")
+        gr.Label(value="Shark Models Demo.")
+        img = Image.open("./Nod_logo.jpg")
+        gr.Image(value=img, show_label=False, interactive=False).style(
+                height=70, width=70
+        )
 
     with gr.Tabs():
         with gr.TabItem("ResNet50"):
@@ -192,12 +189,14 @@ with gr.Blocks() as shark_web:
                         value="vulkan",
                         choices=["cpu", "cuda", "vulkan"],
                     )
-                    load_vmfb = gr.Checkbox(label="Load vmfb", value=True)
-                    save_vmfb = gr.Checkbox(label="Save vmfb", value=False)
+                    with gr.Row():
+                        load_vmfb = gr.Checkbox(label="Load vmfb", value=True)
+                        save_vmfb = gr.Checkbox(label="Save vmfb", value=False)
                     iree_vulkan_target_triple = gr.Textbox(
                         value="",
                         max_lines=1,
                         label="IREE VULKAN TARGET TRIPLE",
+                        visible=False
                     )
                     debug = gr.Checkbox(label="DEBUG", value=False)
                     stable_diffusion = gr.Button("Generate image from prompt")
@@ -236,5 +235,4 @@ with gr.Blocks() as shark_web:
                 outputs=[generated_img, std_output],
             )
 
-shark_web.queue()
 shark_web.launch(share=True, server_port=8080, enable_queue=True)

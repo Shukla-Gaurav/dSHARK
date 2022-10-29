@@ -8,9 +8,9 @@ torchvision
 tqdm
 
 #iree-compiler  | iree-runtime should already be installed
-iree-tools-tflite
-iree-tools-xla
-iree-tools-tf
+#iree-tools-tflite
+#iree-tools-xla
+#iree-tools-tf
 
 # TensorFlow and JAX.
 gin-config

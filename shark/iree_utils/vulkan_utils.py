@@ -21,39 +21,7 @@ def get_vulkan_triple_flag(extra_args=[]):
     if "-iree-vulkan-target-triple=" in " ".join(extra_args):
         print(f"Using target triple from command line args")
         return None
-
-    vulkan_device_cmd = "vulkaninfo | grep deviceName"
-    vulkan_device = run_cmd(vulkan_device_cmd).strip()
-    if all(x in vulkan_device for x in ("Apple", "M1")):
-        print(f"Found {vulkan_device} Device. Using m1-moltenvk-macos")
-        return "-iree-vulkan-target-triple=m1-moltenvk-macos"
-    elif all(x in vulkan_device for x in ("Apple", "M2")):
-        print("Found Apple M2 Device. Using m1-moltenvk-macos")
-        return "-iree-vulkan-target-triple=m1-moltenvk-macos"
-    elif all(x in vulkan_device for x in ("A100", "SXM4")):
-        print(f"Found {vulkan_device} Device. Using ampere-rtx3080-linux")
-        return "-iree-vulkan-target-triple=ampere-rtx3080-linux"
-    elif all(x in vulkan_device for x in ("RTX", "3090")):
-        print(f"Found {vulkan_device} Device. Using ampere-rtx3090-linux")
-        return "-iree-vulkan-target-triple=ampere-rtx3090-linux"
-    elif any(x in vulkan_device for x in ("Radeon", "RX 5")):
-        print(
-            "Found AMD Radeon RX 5000 series device. Using rdna1-5700xt-linux"
-        )
-        return "-iree-vulkan-target-triple=rdna1-5700xt-linux"
-    elif all(x in vulkan_device for x in ("Radeon", "RX 6")):
-        print(
-            "Found AMD Radeon RX 6000 series device. Using rdna2-unknown-linux"
-        )
-        return "-iree-vulkan-target-triple=rdna2-unknown-linux"
-    else:
-        print(
-            """Optimized kernel for your target device is not added yet.
-            Contact SHARK Admin on discord[https://discord.com/invite/RUqY2h2s9u]
-            or pull up an issue."""
-        )
-        print(f"Target : {vulkan_device}")
-        return None
+    return "-iree-vulkan-target-triple=rdna2-unknown-linux"
 
 
 def get_iree_vulkan_args(extra_args=[]):

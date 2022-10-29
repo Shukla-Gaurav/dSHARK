@@ -10,8 +10,8 @@ PACKAGE_VERSION = os.environ.get("SHARK_PACKAGE_VERSION") or "0.0.4"
 backend_deps = []
 if "NO_BACKEND" in os.environ.keys():
     backend_deps = [
-        "iree-compiler>=20221022.190",
-        "iree-runtime>=20221022.190",
+#        "iree-compiler>=20221022.190",
+#        "iree-runtime>=20221022.190",
     ]
 
 setup(
@@ -37,7 +37,7 @@ setup(
     install_requires=[
         "numpy",
         "PyYAML",
-        "torch-mlir>=20221021.633",
+#        "torch-mlir>=20221021.633",
     ]
     + backend_deps,
 )
