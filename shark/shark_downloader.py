@@ -19,6 +19,7 @@ import json
 import hashlib
 from pathlib import Path
 from shark.parser import shark_args
+from os.path import expanduser
 
 input_type_to_np_dtype = {
     "float32": np.float32,
@@ -32,7 +33,7 @@ input_type_to_np_dtype = {
 
 
 # Save the model in the home local so it needn't be fetched everytime in the CI.
-home = str(Path.home())
+home = os.path.normpath(expanduser("~"))
 alt_path = os.path.join(os.path.dirname(__file__), "../gen_shark_tank/")
 custom_path = shark_args.local_tank_cache
 if os.path.exists(alt_path):
@@ -97,14 +98,8 @@ def download_torch_model(
     model_dir_name = model_name + "_torch"
 
     def gs_download_model():
-        gs_command = (
-            'gsutil -o "GSUtil:parallel_process_count=1" cp -r '
-            + tank_url
-            + "/"
-            + model_dir_name
-            + " "
-            + WORKDIR
-        )
+        gs_command = os.path.normpath("gsutil -o 'GSUtil:parallel_process_count=1' cp -r {0}/{1} {2}".format(tank_url, model_dir_name,WORKDIR))
+        print(gs_command)
         if os.system(gs_command) != 0:
             raise Exception("model not present in the tank. Contact Nod Admin")
 
