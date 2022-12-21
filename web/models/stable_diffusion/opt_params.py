@@ -8,21 +8,30 @@ from models.stable_diffusion.model_wrappers import (
 from models.stable_diffusion.resources import models_db
 from models.stable_diffusion.stable_args import args
 from models.stable_diffusion.utils import get_shark_model
-from shark.iree_utils.vulkan_utils import get_vulkan_triple_flag
+from shark.iree_utils.vulkan_utils import (
+    get_iree_vulkan_args,
+    map_device_to_path,
+)
 
 BATCH_SIZE = len(args.prompts)
 if BATCH_SIZE != 1:
     sys.exit("Only batch size 1 is supported.")
 
+# set fully qualified device.
+args.device = map_device_to_path(args.device)
+if not args.iree_vulkan_target_triple:
+    vulkan_flags = get_iree_vulkan_args(args.device)
+    if vulkan_flags:
+        args.iree_vulkan_target_triple = vulkan_flags[0].split("=", 1)[1]
+
 # use tuned models only in the case of stablediffusion/fp16 and rdna3 cards.
 args.use_tuned = False
-if args.precision == "fp16" and args.variant == "stablediffusion":
-    if not args.iree_vulkan_target_triple:
-        vulkan_triple_flags = get_vulkan_triple_flag()
-        if vulkan_triple_flags and "rdna3" in vulkan_triple_flags:
-            args.use_tuned = True
-    elif "rdna3" in args.iree_vulkan_target_triple:
-        args.use_tuned = True
+if (
+    args.precision == "fp16"
+    and args.variant == "stablediffusion"
+    and "rdna3" in args.iree_vulkan_target_triple
+):
+    args.use_tuned = True
 if args.use_tuned:
     print("Using tuned models for rdna3 card")
 

@@ -17,7 +17,7 @@
 import os
 import sys
 import subprocess
-from iree.runtime import get_driver, get_device
+from iree.runtime import get_driver
 
 
 def run_cmd(cmd):
@@ -36,55 +36,6 @@ def run_cmd(cmd):
         return result_str
     except Exception:
         sys.exit("Exiting program due to error running:", cmd)
-
-
-def get_all_devices(driver_name):
-    """
-    Inputs: driver_name
-    Returns a list of all the available devices for a given driver sorted by
-    the iree path names of the device as in --list_devices option in iree.
-    Set `full_dict` flag to True to get a dict
-    with `path`, `name` and `device_id` for all devices
-    """
-    driver = get_driver(driver_name)
-    device_list_src = driver.query_available_devices()
-    device_list_src.sort(key=lambda d: d["path"])
-    return device_list_src
-
-
-def create_map_device_to_key(driver, key):
-    # key can only be path, name, device id
-    device_list = get_all_devices(driver)
-    device_map = dict()
-    # mapping driver name to default device (driver://0)
-    device_map[f"{driver}"] = f"{device_list[0][key]}"
-    for i, device in enumerate(device_list):
-        # mapping with index
-        device_map[f"{driver}://{i}"] = f"{device[key]}"
-        # mapping with full path
-        device_map[f"{driver}://{device['path']}"] = f"{device[key]}"
-
-    return device_map
-
-
-def map_device_to_path(device):
-    driver = device.split("://")[0]
-    device_map = create_map_device_to_key(driver, "path")
-    try:
-        device_path = device_map[device]
-    except KeyError:
-        raise Exception(f"Device {device} is not a valid device.")
-    return f"{driver}://{device_path}"
-
-
-def map_device_to_name(device):
-    driver = device.split("://")[0]
-    device_map = create_map_device_to_key(driver, "name")
-    try:
-        device_name = device_map[device]
-    except KeyError:
-        raise Exception(f"Device {device} is not a valid device.")
-    return device_name
 
 
 def iree_device_map(device):

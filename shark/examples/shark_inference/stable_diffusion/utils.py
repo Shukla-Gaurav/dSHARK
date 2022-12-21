@@ -87,12 +87,3 @@ def set_iree_runtime_flags():
         set_iree_vulkan_runtime_flags(flags=vulkan_runtime_flags)
 
     return
-
-
-def make_qualified_device_name():
-    # modify device name to be fully qualified device name
-    # of the format driver://path
-    # supported for vulkan as of now
-
-    if "vulkan" in args.device:
-        args.device = map_device_to_path(args.device)
