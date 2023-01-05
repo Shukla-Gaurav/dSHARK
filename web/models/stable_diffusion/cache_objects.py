@@ -75,12 +75,22 @@ def get_tokenizer(version):
 
 
 class ModelCache:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ModelCache, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
         self.device = None
         self.variant = None
         self.version = None
         self.schedulers = None
         self.tokenizer = None
+        self.vae = None
+        self.unet = None
+        self.clip = None
 
     def set_models(self, device_key):
         if self.device != device_key or self.variant != args.variant:
@@ -91,10 +101,15 @@ class ModelCache:
             args.max_length = 64
             args.use_tuned = True
             set_init_device_flags()
+            del self.schedulers
             self.schedulers = get_schedulers(args.version)
+            del self.tokenizer
             self.tokenizer = get_tokenizer(args.version)
+            del self.vae
             self.vae = get_vae()
+            del self.unet
             self.unet = get_unet()
+            del self.clip
             self.clip = get_clip()
 
 
