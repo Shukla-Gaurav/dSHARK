@@ -13,6 +13,7 @@ from PIL import PngImagePlugin
 from datetime import datetime as dt
 from dataclasses import dataclass
 from csv import DictWriter
+from multiprocessing import Process
 from apps.stable_diffusion.src import (
     args,
     Text2ImagePipeline,
@@ -129,6 +130,39 @@ config_obj = None
 schedulers = None
 
 
+def generate_image(
+    prompt,
+    negative_prompt,
+    batch_size,
+    height,
+    width,
+    steps,
+    guidance_scale,
+    img_seed,
+    max_length,
+    dtype,
+    use_base_vae,
+    cpu_scheduling,
+    out_imgs,
+):
+    global text2img_obj
+    res = txt2img_obj.generate_images(
+        prompt,
+        negative_prompt,
+        batch_size,
+        height,
+        width,
+        steps,
+        guidance_scale,
+        img_seed,
+        max_length,
+        dtype,
+        use_base_vae,
+        cpu_scheduling,
+    )
+    out_imgs.extend(res)
+
+
 # Exposed to UI.
 def txt2img_inf(
     prompt: str,
@@ -238,20 +272,27 @@ def txt2img_inf(
     for i in range(batch_count):
         if i > 0:
             img_seed = utils.sanitize_seed(-1)
-        out_imgs = txt2img_obj.generate_images(
-            prompt,
-            negative_prompt,
-            batch_size,
-            height,
-            width,
-            steps,
-            guidance_scale,
-            img_seed,
-            args.max_length,
-            dtype,
-            args.use_base_vae,
-            cpu_scheduling,
+        out_imgs = []
+        p = Process(
+            target=generate_image,
+            args=(
+                prompt,
+                negative_prompt,
+                batch_size,
+                height,
+                width,
+                steps,
+                guidance_scale,
+                img_seed,
+                args.max_length,
+                dtype,
+                args.use_base_vae,
+                cpu_scheduling,
+                out_imgs,
+            ),
         )
+        p.start()
+        p.join()
         save_output_img(out_imgs[0], img_seed)
         generated_imgs.extend(out_imgs)
         seeds.append(img_seed)
