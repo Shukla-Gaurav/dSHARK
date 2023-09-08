@@ -185,6 +185,7 @@ def chat(
                 extra_args_cmd=_extra_args,
             )
         else:
+            print("Instantiating Unsharded Vicuna")
             #  if config_file is None:
             vicuna_model = UnshardedVicuna(
                 model_name,
@@ -197,16 +198,19 @@ def chat(
                 load_mlir_from_shark_tank=True,
                 extra_args_cmd=_extra_args,
             )
+            print("Instantiated Unsharded Vicuna")
 
     prompt = create_prompt(model_name, history)
 
     partial_text = ""
     count = 0
     start_time = time.time()
+    print("start generating tokens....")
     for text, msg in progress.tqdm(
         vicuna_model.generate(prompt, cli=cli),
         desc="generating response",
     ):
+        print(f"{count} token generated {text}")
         count += 1
         if "formatted" in msg:
             history[-1][1] = text
@@ -217,6 +221,7 @@ def chat(
             partial_text += text + " "
             history[-1][1] = partial_text
             yield history, ""
+    print("Done with response")
 
     return history, ""
 

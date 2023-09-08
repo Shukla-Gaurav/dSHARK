@@ -373,8 +373,10 @@ class VicunaBase(SharkLLMBase):
             return f.read()
 
     def generate_new_token(self, params, sharded=True, cli=True):
+        print("Inside generate new token method")
         is_first = params["is_first"]
         if is_first:
+            print("It's the first token")
             prompt = params["prompt"]
             input_ids = self.tokenizer(prompt).input_ids
             input_id_len = len(input_ids)
@@ -383,10 +385,14 @@ class VicunaBase(SharkLLMBase):
             if sharded:
                 output = self.shark_model.forward(input_ids, is_first=is_first)
             else:
+                print("Unsharded route...")
                 output = self.shark_model("first_vicuna_forward", (input_ids,))
-                out_tensor = torch.tensor(output[1:])
+                out_tensor = torch.tensor(np.array(output[1:]))
+                print("out tensor=", out_tensor)
+                print("exiting unsharded route..")
 
         else:
+            print("It's the second token")
             token = params["token"]
             past_key_values = params["past_key_values"]
             input_ids = [token]
@@ -400,11 +406,13 @@ class VicunaBase(SharkLLMBase):
                     is_first=is_first,
                 )
             else:
+                print("Unsharded route...")
                 token = token.to(torch.int64).reshape([1, 1])
                 second_input = (token,) + tuple(past_key_values)
                 output = self.shark_model(
                     "second_vicuna_forward", second_input
                 )
+                print("Unsharded route...")
 
         if sharded:
             _logits = output["logits"]
@@ -412,8 +420,9 @@ class VicunaBase(SharkLLMBase):
             _token = int(torch.argmax(_logits[:, -1, :], dim=1)[0])
         else:
             _logits = torch.tensor(output[0])
-            _past_key_values = torch.tensor(output[1:])
+            _past_key_values = torch.tensor(np.array(output[1:]))
             _token = torch.argmax(_logits[:, -1, :], dim=1)
+            #  print(f" token : {_token} | logits: {_logits}")
 
         _detok = self.tokenizer.decode(_token, skip_special_tokens=False)
         ret_dict = {
@@ -423,8 +432,6 @@ class VicunaBase(SharkLLMBase):
             "past_key_values": _past_key_values,
         }
 
-        if cli:
-            print(f" token : {_token} | detok : {_detok}")
 
         return ret_dict
 
@@ -1239,6 +1246,7 @@ class UnshardedVicuna(VicunaBase):
             max_num_tokens,
             extra_args_cmd=extra_args_cmd,
         )
+        print("Inside constructor of unsharded vicuna")
         self.hf_auth_token = hf_auth_token
         if self.model_name == "llama2_7b":
             self.hf_model_path = "meta-llama/Llama-2-7b-chat-hf"
@@ -1264,6 +1272,7 @@ class UnshardedVicuna(VicunaBase):
         self.tokenizer = self.get_tokenizer()
         self.cache_vicunas = cache_vicunas
         self.compile()
+        print("Exiting constructor of unsharded vicuna")
 
     def get_model_path(self, suffix="mlir"):
         safe_device = self.device.split("-")[0]
@@ -1399,6 +1408,7 @@ class UnshardedVicuna(VicunaBase):
         return "\n".join(new_lines)
 
     def compile(self):
+        print("Inside compile of Unsharded vicuna")
         # Testing : DO NOT Download Vmfbs if not found. Modify later
         # download vmfbs for A100
         if not self.vicuna_vmfb_path.exists() and self.download_vmfb:
@@ -1686,6 +1696,7 @@ class UnshardedVicuna(VicunaBase):
         return res_str
 
     def generate(self, prompt, cli):
+        print("Inside generate method")
         # TODO: refactor for cleaner integration
         if self.shark_model is None:
             self.compile()
@@ -1736,6 +1747,7 @@ class UnshardedVicuna(VicunaBase):
             yield detok, ""
 
         res_str = self.decode_tokens(res_tokens)
+        print("Exiting generate method")
         yield res_str, "formatted"
 
     def autocomplete(self, prompt):
