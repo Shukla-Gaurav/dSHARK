@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 import json
 import re
 import gc
