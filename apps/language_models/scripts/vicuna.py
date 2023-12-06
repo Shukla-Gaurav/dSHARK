@@ -1482,6 +1482,7 @@ class ShardedVicuna(VicunaBase):
         )
 
     def generate(self, prompt, cli=False):
+        print("inside generate")
         # TODO: refactor for cleaner integration
 
         history = []

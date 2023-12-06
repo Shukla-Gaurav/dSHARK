@@ -162,8 +162,11 @@ def chat(
     from apps.language_models.scripts.vicuna import UnshardedVicuna
     from apps.stable_diffusion.src import args
 
+
     new_model_vmfb_key = f"{model_name}#{model_path}#{device}#{device_id}#{precision}#{download_vmfb}"
+    print(new_model_vmfb_key, model_vmfb_key)
     if vicuna_model is None or new_model_vmfb_key != model_vmfb_key:
+        print("initialize")
         model_vmfb_key = new_model_vmfb_key
         max_toks = 128 if model_name == "codegen" else 512
 
@@ -225,6 +228,8 @@ def chat(
                 print(f"extra args = {_extra_args}")
 
         if sharded:
+            print("in sharded version\n")
+            print(device, no_of_devices)
             vicuna_model = ShardedVicuna(
                 model_name,
                 hf_model_path=model_path,
@@ -236,6 +241,7 @@ def chat(
                 n_devices=no_of_devices,
             )
         else:
+            print("in unsharded version")
             #  if config_file is None:
             vicuna_model = UnshardedVicuna(
                 model_name,
@@ -266,6 +272,7 @@ def chat(
     #    desc="generating response",
     # ):
     for text, msg, exec_time in vicuna_model.generate(prompt, cli=cli):
+        print("running for loop")
         if msg is None:
             if is_first:
                 prefill_time = exec_time / 1000
